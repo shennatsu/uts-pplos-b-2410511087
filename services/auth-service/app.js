@@ -1,25 +1,37 @@
+require('dotenv').config();
 const express = require('express');
-const router = express.Router();
+const cors = require('cors');
 const passport = require('passport');
+const GitHubStrategy = require('passport-github2').Strategy;
 
-const { register, login, refreshToken, logout, getMe } = require('../controllers/AuthController');
-const { githubCallback } = require('../controllers/OAuthController');
-const authMiddleware = require('../middleware/jwtMiddleware');
+const authRoutes = require('./routes/authRoutes');
 
-router.post('/register', register);
-router.post('/login', login);
-router.post('/refresh', refreshToken);
-router.post('/logout', authMiddleware, logout);
-router.get('/me', authMiddleware, getMe);
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(passport.initialize());
 
-// GitHub OAuth - NIM ganjil wajib pake GitHub
-router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
-router.get('/github/callback',
-    passport.authenticate('github', { session: false, failureRedirect: '/auth/github/failed' }),
-    githubCallback
-);
-router.get('/github/failed', (req, res) => {
-    res.status(401).json({ message: 'Login GitHub gagal' });
+// setup GitHub OAuth strategy
+passport.use(new GitHubStrategy(
+    {
+        clientID: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        callbackURL: process.env.GITHUB_CALLBACK_URL
+    },
+    (accessToken, refreshToken, profile, done) => {
+        return done(null, profile);
+    }
+));
+
+// semua route auth ada di sini
+app.use('/auth', authRoutes);
+
+// health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', service: 'auth-service', port: process.env.PORT });
 });
 
-module.exports = router;
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+    console.log(`Auth service jalan di port ${PORT}`);
+});

@@ -1,4 +1,6 @@
-env.
-node_modules
-dist
-coverage
+.env
+node_modules/
+vendor/
+services/pengaduan-service/writable/
+.DS_Store
+Thumbs.d

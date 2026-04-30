@@ -13,7 +13,7 @@ const kirimNotifikasi = async (req, res) => {
 
         res.status(201).json({ message: 'Notifikasi berhasil dikirim', id });
     } catch (err) {
-        console.error('Error kirim notifikasi:', err.message);
+        console.error('Error kirim notifikasi:', err);
         res.status(500).json({ message: 'Terjadi kesalahan server' });
     }
 };

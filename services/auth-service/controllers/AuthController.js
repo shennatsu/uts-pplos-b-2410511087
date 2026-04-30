@@ -72,7 +72,7 @@ const login = async (req, res) => {
             user: { id: user.id, nama: user.nama, email: user.email, role: user.role }
         });
     } catch (err) {
-        console.error('Error login:', err.message);
+        console.error('Error login:', err);
         res.status(500).json({ message: 'Terjadi kesalahan server' });
     }
 };

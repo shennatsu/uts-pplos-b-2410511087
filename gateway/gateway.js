@@ -8,7 +8,6 @@ const rateLimiter = require('./middleware/rateLimiter');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
 // rate limiting ke semua route
 app.use(rateLimiter);
@@ -34,7 +33,7 @@ app.get('/health', (req, res) => {
 app.use('/auth', createProxyMiddleware({
     target: process.env.AUTH_SERVICE,
     changeOrigin: true,
-    pathRewrite: { '^/auth': '/auth' },
+    pathRewrite: { '^/': '/auth/' },
     on: {
         error: (err, req, res) => {
             res.status(503).json({ message: 'Auth service tidak tersedia' });
@@ -46,7 +45,7 @@ app.use('/auth', createProxyMiddleware({
 app.use('/pengaduan', createProxyMiddleware({
     target: process.env.PENGADUAN_SERVICE,
     changeOrigin: true,
-    pathRewrite: { '^/pengaduan': '/api/pengaduan' },
+    pathRewrite: { '^/': '/api/pengaduan/' },
     on: {
         error: (err, req, res) => {
             res.status(503).json({ message: 'Pengaduan service tidak tersedia' });
@@ -58,7 +57,7 @@ app.use('/pengaduan', createProxyMiddleware({
 app.use('/notifikasi', createProxyMiddleware({
     target: process.env.NOTIFIKASI_SERVICE,
     changeOrigin: true,
-    pathRewrite: { '^/notifikasi': '/notifikasi' },
+   pathRewrite: { '^/': '/notifikasi/' },
     on: {
         error: (err, req, res) => {
             res.status(503).json({ message: 'Notifikasi service tidak tersedia' });
@@ -70,7 +69,7 @@ app.use('/notifikasi', createProxyMiddleware({
 app.use('/disposisi', createProxyMiddleware({
     target: process.env.PENGADUAN_SERVICE,
     changeOrigin: true,
-    pathRewrite: { '^/disposisi': '/api/disposisi' },
+     pathRewrite: { '^/': '/api/disposisi/' },
     on: {
         error: (err, req, res) => {
             res.status(502).json({ message: 'Pengaduan service tidak bisa diakses' });

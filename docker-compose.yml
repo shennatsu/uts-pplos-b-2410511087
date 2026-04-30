@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # Database
+  mysql:
+    image: mysql:8.0
+    container_name: uts_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docs/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - uts_network
+
+  # Auth Service
+  auth-service:
+    build: ./services/auth-service
+    container_name: uts_auth
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: auth_db
+      JWT_SECRET: upnvj_secret_pengaduan_2410511087
+      JWT_EXPIRES_IN: 15m
+      REFRESH_SECRET: upnvj_refresh_pengaduan_2410511087
+      REFRESH_EXPIRES_IN: 7d
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      GITHUB_CALLBACK_URL: http://localhost:3001/auth/github/callback
+    depends_on:
+      - mysql
+    networks:
+      - uts_network
+
+  # Pengaduan Service
+  pengaduan-service:
+    build: ./services/pengaduan-service
+    container_name: uts_pengaduan
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      APP_ENV: production
+      APP_KEY: base64:ganti_dengan_php_artisan_key_generate
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: pengaduan_db
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      JWT_SECRET: upnvj_secret_pengaduan_2410511087
+      NOTIFIKASI_SERVICE_URL: http://notifikasi-service:3003
+      INTERNAL_SECRET: internal_secret_pengaduan_2410511087
+    depends_on:
+      - mysql
+    networks:
+      - uts_network
+
+  # Notifikasi Service
+  notifikasi-service:
+    build: ./services/notifikasi-service
+    container_name: uts_notifikasi
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASS: root
+      DB_NAME: notifikasi_db
+      JWT_SECRET: upnvj_secret_pengaduan_2410511087
+      INTERNAL_SECRET: internal_secret_pengaduan_2410511087
+    depends_on:
+      - mysql
+    networks:
+      - uts_network
+
+  # API Gateway
+  gateway:
+    build: ./gateway
+    container_name: uts_gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      JWT_SECRET: upnvj_secret_pengaduan_2410511087
+      AUTH_SERVICE: http://auth-service:3001
+      PENGADUAN_SERVICE: http://pengaduan-service:3002
+      NOTIFIKASI_SERVICE: http://notifikasi-service:3003
+    depends_on:
+      - auth-service
+      - pengaduan-service
+      - notifikasi-service
+    networks:
+      - uts_network
+
+volumes:
+  mysql_data:
+
+networks:
+  uts_network:
+    driver: bridge

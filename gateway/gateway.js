@@ -8,11 +8,12 @@ const rateLimiter = require('./middleware/rateLimiter');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 
-// rate limiting dulu sebelum apapun
+// rate limiting ke semua route
 app.use(rateLimiter);
 
-// validasi JWT sebelum diteruskan ke service
+// validasi JWT sebelum diteruskan
 app.use(jwtValidate);
 
 // health check gateway sendiri
@@ -22,9 +23,9 @@ app.get('/health', (req, res) => {
         service: 'api-gateway',
         port: process.env.PORT,
         routes: {
-            '/auth/*'       : process.env.AUTH_SERVICE,
-            '/pengaduan/*'  : process.env.PENGADUAN_SERVICE,
-            '/notifikasi/*' : process.env.NOTIFIKASI_SERVICE,
+            auth: process.env.AUTH_SERVICE,
+            pengaduan: process.env.PENGADUAN_SERVICE,
+            notifikasi: process.env.NOTIFIKASI_SERVICE
         }
     });
 });
@@ -33,10 +34,10 @@ app.get('/health', (req, res) => {
 app.use('/auth', createProxyMiddleware({
     target: process.env.AUTH_SERVICE,
     changeOrigin: true,
-    // /auth/login → /auth/login (ga perlu rewrite, path tetap)
+    pathRewrite: { '^/auth': '/auth' },
     on: {
         error: (err, req, res) => {
-            res.status(502).json({ message: 'Auth service tidak bisa diakses' });
+            res.status(503).json({ message: 'Auth service tidak tersedia' });
         }
     }
 }));
@@ -48,7 +49,7 @@ app.use('/pengaduan', createProxyMiddleware({
     pathRewrite: { '^/pengaduan': '/api/pengaduan' },
     on: {
         error: (err, req, res) => {
-            res.status(502).json({ message: 'Pengaduan service tidak bisa diakses' });
+            res.status(503).json({ message: 'Pengaduan service tidak tersedia' });
         }
     }
 }));
@@ -60,12 +61,12 @@ app.use('/notifikasi', createProxyMiddleware({
     pathRewrite: { '^/notifikasi': '/notifikasi' },
     on: {
         error: (err, req, res) => {
-            res.status(502).json({ message: 'Notifikasi service tidak bisa diakses' });
+            res.status(503).json({ message: 'Notifikasi service tidak tersedia' });
         }
     }
 }));
 
-// disposisi juga ke pengaduan-service
+// Disposisi route root ke health check
 app.use('/disposisi', createProxyMiddleware({
     target: process.env.PENGADUAN_SERVICE,
     changeOrigin: true,
@@ -77,10 +78,15 @@ app.use('/disposisi', createProxyMiddleware({
     }
 }));
 
+// route tidak ditemukan
+app.use((req, res) => {
+    res.status(404).json({ message: `Route ${req.method} ${req.path} tidak ditemukan` });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`API Gateway jalan di port ${PORT}`);
-    console.log(`Auth Service    → ${process.env.AUTH_SERVICE}`);
-    console.log(`Pengaduan       → ${process.env.PENGADUAN_SERVICE}`);
-    console.log(`Notifikasi      → ${process.env.NOTIFIKASI_SERVICE}`);
+    console.log(`Auth     → ${process.env.AUTH_SERVICE}`);
+    console.log(`Pengaduan → ${process.env.PENGADUAN_SERVICE}`);
+    console.log(`Notifikasi → ${process.env.NOTIFIKASI_SERVICE}`);
 });

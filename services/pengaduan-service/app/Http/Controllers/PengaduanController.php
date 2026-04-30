@@ -116,23 +116,24 @@ class PengaduanController extends Controller
         return response()->json(['message' => 'Pengaduan berhasil dihapus'], 204);
     }
 
-    // helper kirim notifikasi ke notifikasi-service (inter-service communication)
     private function kirimNotifikasi($userId, $judul, $pesan, $tipe)
-    {
-        try {
-            $client = new \GuzzleHttp\Client();
-            $client->post(env('NOTIFIKASI_SERVICE_URL', 'http://localhost:3003') . '/notifikasi', [
-                'json' => [
-                    'user_id' => $userId,
-                    'judul'   => $judul,
-                    'pesan'   => $pesan,
-                    'tipe'    => $tipe
-                ],
-                'timeout' => 3
-            ]);
-        } catch (\Exception $e) {
-            // kalau notifikasi gagal, pengaduan tetap jalan
-            \Log::warning('Notifikasi gagal dikirim: ' . $e->getMessage());
-        }
+{
+    try {
+        $client = new \GuzzleHttp\Client();
+        $client->post(env('NOTIFIKASI_SERVICE_URL', 'http://localhost:3003') . '/notifikasi', [
+            'json' => [
+                'user_id' => $userId,
+                'judul'   => $judul,
+                'pesan'   => $pesan,
+                'tipe'    => $tipe
+            ],
+            'headers' => [
+                'x-internal-secret' => env('INTERNAL_SECRET')
+            ],
+            'timeout' => 3
+        ]);
+    } catch (\Exception $e) {
+        \Log::warning('Notifikasi gagal: ' . $e->getMessage());
     }
+}
 }

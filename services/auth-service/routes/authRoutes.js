@@ -12,7 +12,7 @@ router.post('/refresh', refreshToken);
 router.post('/logout', authMiddleware, logout);
 router.get('/me', authMiddleware, getMe);
 
-// GitHub OAuth - NIM ganjil wajib pake GitHub
+// GitHub OAuth 
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
 router.get('/github/callback',
     passport.authenticate('github', { session: false, failureRedirect: '/auth/github/failed' }),

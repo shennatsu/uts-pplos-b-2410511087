@@ -1,0 +1,444 @@
+{
+  "info": {
+    "name": "UTS PPLOS B - 2410511087",
+    "description": "Sistem Pengaduan Mahasiswa - Microservice API Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gateway_url", "value": "http://localhost:3000" },
+    { "key": "auth_url", "value": "http://localhost:3001" },
+    { "key": "notif_url", "value": "http://localhost:3003" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 - Health Checks",
+      "item": [
+        {
+          "name": "Gateway Health",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/health"
+          }
+        },
+        {
+          "name": "Auth Service Health",
+          "request": {
+            "method": "GET",
+            "url": "{{auth_url}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Auth Service",
+      "item": [
+        {
+          "name": "Register Mahasiswa",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Budi Santoso\",\n  \"email\": \"budi@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"mahasiswa\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Admin Sistem\",\n  \"email\": \"admin@test.com\",\n  \"password\": \"admin123\",\n  \"role\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Register - Email Duplikat (409)",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Duplikat\",\n  \"email\": \"budi@test.com\",\n  \"password\": \"123456\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login Mahasiswa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) pm.collectionVariables.set('access_token', json.accessToken);",
+                  "if (json.refreshToken) pm.collectionVariables.set('refresh_token', json.refreshToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@test.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login - Password Salah (401)",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@test.com\",\n  \"password\": \"salah\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET Me (Protected)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "GET Me - Tanpa Token (401)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/auth/me"
+          }
+        },
+        {
+          "name": "GET Me - Token Invalid (401)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer tokenpalsu123" }]
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/refresh",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/auth/logout",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "GET Me - Setelah Logout (Blacklisted 401)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "GitHub OAuth - Redirect",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/auth/github"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Pengaduan Service",
+      "item": [
+        {
+          "name": "Buat Pengaduan",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/pengaduan",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"Nilai tidak keluar di portal\",\n  \"deskripsi\": \"Sudah 2 minggu nilai UTS belum muncul di portal akademik\",\n  \"kategori\": \"akademik\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Buat Pengaduan Non-Akademik",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/pengaduan",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"judul\": \"AC ruang kelas rusak\",\n  \"deskripsi\": \"AC di ruang 301 sudah seminggu tidak berfungsi\",\n  \"kategori\": \"non_akademik\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List Pengaduan",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/pengaduan",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "List Pengaduan - Filter Kategori",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gateway_url}}/pengaduan?kategori=akademik",
+              "query": [{ "key": "kategori", "value": "akademik" }]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "List Pengaduan - Filter Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gateway_url}}/pengaduan?status=open",
+              "query": [{ "key": "status", "value": "open" }]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "List Pengaduan - Paging",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{gateway_url}}/pengaduan?per_page=5&page=1",
+              "query": [
+                { "key": "per_page", "value": "5" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "Detail Pengaduan",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/pengaduan/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "Detail Pengaduan - Tidak Ada (404)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/pengaduan/999",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "Update Status Pengaduan",
+          "request": {
+            "method": "PATCH",
+            "url": "{{gateway_url}}/pengaduan/1/status",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Disposisi ke Unit",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/pengaduan/1/disposisi",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unit_id\": 1,\n  \"catatan\": \"Diteruskan ke unit akademik untuk ditindaklanjuti\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Status Disposisi",
+          "request": {
+            "method": "PATCH",
+            "url": "{{gateway_url}}/disposisi/1",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status_disposisi\": \"diproses\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Beri Rating",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/pengaduan/1/rating",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nilai\": 4,\n  \"komentar\": \"Respon cukup cepat, terima kasih\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Beri Rating - Duplikat (409)",
+          "request": {
+            "method": "POST",
+            "url": "{{gateway_url}}/pengaduan/1/rating",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nilai\": 5,\n  \"komentar\": \"Rating duplikat\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Pengaduan - Tanpa Token (401 dari Gateway)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/pengaduan"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Notifikasi Service",
+      "item": [
+        {
+          "name": "Kirim Notifikasi (Internal)",
+          "request": {
+            "method": "POST",
+            "url": "{{notif_url}}/notifikasi",
+            "header": [
+              { "key": "x-internal-secret", "value": "internal_secret_pengaduan_2410511087" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"judul\": \"Pengaduan Baru Dibuat\",\n  \"pesan\": \"Pengaduan kamu berhasil dibuat dan sedang diproses\",\n  \"tipe\": \"pengaduan_baru\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Kirim Notifikasi - Tanpa Internal Secret (403)",
+          "request": {
+            "method": "POST",
+            "url": "{{notif_url}}/notifikasi",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1,\n  \"judul\": \"Test\",\n  \"pesan\": \"Test\",\n  \"tipe\": \"pengaduan_baru\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Kirim Notifikasi - Body Tidak Lengkap (400)",
+          "request": {
+            "method": "POST",
+            "url": "{{notif_url}}/notifikasi",
+            "header": [
+              { "key": "x-internal-secret", "value": "internal_secret_pengaduan_2410511087" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "List Notifikasi User",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/notifikasi/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "List Notifikasi - Tanpa Token (401)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/notifikasi/1"
+          }
+        },
+        {
+          "name": "Tandai Notifikasi Dibaca",
+          "request": {
+            "method": "PUT",
+            "url": "{{gateway_url}}/notifikasi/1/read",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        },
+        {
+          "name": "Tandai Dibaca - Tidak Ada (404)",
+          "request": {
+            "method": "PUT",
+            "url": "{{gateway_url}}/notifikasi/999/read",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Gateway Features",
+      "item": [
+        {
+          "name": "Route Tidak Ada (404)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/blabla"
+          }
+        },
+        {
+          "name": "Rate Limit Test (kirim 61x untuk dapat 429)",
+          "request": {
+            "method": "GET",
+            "url": "{{gateway_url}}/health"
+          }
+        }
+      ]
+    }
+  ]
+}

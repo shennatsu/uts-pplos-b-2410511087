@@ -419,7 +419,7 @@ Body:
 
 ## Demo Video
 
-> Link YouTube (unlisted): **[LINK_YOUTUBE_DI_SINI]**
+> Link YouTube (unlisted): **[https://youtu.be/y0abM5JDCgk0]**
 
 ---
 

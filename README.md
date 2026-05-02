@@ -419,7 +419,7 @@ Body:
 
 ## Demo Video
 
-> Link YouTube (unlisted): **[https://youtu.be/y0abM5JDCgk0]**
+> Link YouTube : **[https://youtu.be/y0abM5JDCgk0]**
 
 ---
 
